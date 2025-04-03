@@ -1,0 +1,62 @@
+package com.example;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@WebServlet("/EmployeeServlet")
+public class EmployeeServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String id = request.getParameter("id");
+        String jdbcURL = "jdbc:mysql://localhost:3306/employee_db";
+        String dbUser  = "root"; // Change as per your MySQL username
+        String dbPassword = "password"; // Change as per your MySQL password
+
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+
+        out.println("<html><body>");
+        out.println("<h2>Employee Search</h2>");
+        out.println("<form method='get'>");
+        out.println("Employee ID: <input type='text' name='id'/>");
+        out.println("<input type='submit' value='Search'/>");
+        out.println("</form>");
+
+        if (id != null && !id.isEmpty()) {
+            try {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                Connection connection = DriverManager.getConnection(jdbcURL, dbUser , dbPassword);
+                String sql = "SELECT * FROM employees WHERE id = ?";
+                PreparedStatement statement = connection.prepareStatement(sql);
+                statement.setInt(1, Integer.parseInt(id));
+                ResultSet resultSet = statement.executeQuery();
+
+                if (resultSet.next()) {
+                    out.println("<h3>Employee Details:</h3>");
+                    out.println("ID: " + resultSet.getInt("id") + "<br>");
+                    out.println("Name: " + resultSet.getString("name") + "<br>");
+                    out.println("Position: " + resultSet.getString("position") + "<br>");
+                    out.println("Department: " + resultSet.getString("department") + "<br>");
+                } else {
+                    out.println("<h3>No employee found with ID: " + id + "</h3>");
+                }
+
+                connection.close();
+            } catch (Exception e) {
+out.println("<h3>Error: " + e.getMessage() + "</h3>");
+            }
+        }
+
+        out.println("</body></html>");
+    }
+}
